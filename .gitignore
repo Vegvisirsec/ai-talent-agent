@@ -1,0 +1,8 @@
+*.html
+
+private/
+output/
+dist/
+
+portrait.png
+photo-placeholder.jpg
