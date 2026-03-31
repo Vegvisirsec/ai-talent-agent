@@ -99,6 +99,15 @@ These should reflect the posting language naturally when truthful.
 
 If the job posting uses a specific title, mirror that exact title near the top of the CV when that is honest. Prefer exact wording over a synonym when the candidate can defend it.
 
+This matters for discoverability. If the posting says `Marketing Manager`, the summary should open with `Marketing Manager` when that title is truthful for the target positioning. Do not weaken discoverability by replacing the title with a nearby synonym such as `Marketer`, `Marketing Strategist`, or another creative variation when the exact posting title can be used honestly.
+
+Use this decision order:
+
+- include the exact target title in the first summary sentence,
+- prefer the exact title over synonyms,
+- use the strongest honest phrasing,
+- if claiming the exact title as the opening noun feels too aggressive or not fully justified, use `targeting [Exact Title] roles` instead.
+
 If the target position is located outside Finland, include willingness to relocate in the profile / professional summary section when that is true for the candidate.
 
 ### 4. Reorder experience for relevance
