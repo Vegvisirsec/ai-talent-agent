@@ -23,6 +23,8 @@ The target standard is:
 - extremely easy for ATS and AI screening systems to extract correctly,
 - polished enough that a human reviewer finds it clear, credible, and professional.
 
+Use the ATS guidance in this repo as practical heuristics. The goal is to maximize parseability and search visibility, not to assume any single ATS behaves perfectly or identically.
+
 ## Honesty boundary
 
 You must not lie, invent history, fabricate achievements, inflate scope, or imply experience that is not justifiable from the source material.
@@ -91,9 +93,11 @@ Adjust first:
 1. target title or headline,
 2. professional summary,
 3. core skills section.
-4. The keyword sweet spot is 25-35. Pick them from the listing and try to include in core skills or experience
+4. role-specific keywords. The practical target is usually 25-35 relevant keywords taken from the listing and woven naturally into the summary, skills, and experience.
 
 These should reflect the posting language naturally when truthful.
+
+If the job posting uses a specific title, mirror that exact title near the top of the CV when that is honest. Prefer exact wording over a synonym when the candidate can defend it.
 
 If the target position is located outside Finland, include willingness to relocate in the profile / professional summary section when that is true for the candidate.
 
@@ -113,9 +117,13 @@ Do not paste the job description.
 
 Instead:
 
+- use the exact wording from the posting where truthful,
 - place role-relevant keywords in the summary,
 - use them in bullets only where supported,
+- include both expanded and abbreviated terms only when both are genuinely useful and defensible,
 - keep the language natural and interview-defensible.
+
+Aim for visibility, not stuffing. Too few relevant terms hurts discoverability; too many can look manipulative or trigger screening penalties.
 
 ## CV formatting rules
 
@@ -125,6 +133,7 @@ Instead:
 - Do not use two-column layouts.
 - Do not use tables for core content.
 - Do not use text boxes for important content.
+- Do not rely on sidebars or split visual blocks for key information.
 
 ### 2. Keep contact details in the main body
 
@@ -150,11 +159,15 @@ Prefer:
 
 Avoid creative section names.
 
+If the section contains language ability, use `Languages`.
+
 ### 4. Match the target title honestly
 
 For each application, mirror the exact target title near the top when that is honest.
 
 Do not change historical job titles.
+
+Recruiters often search by literal title strings, so exact title matching is a high-priority tailoring step.
 
 ### 5. Use consistent date formatting
 
@@ -174,12 +187,16 @@ Avoid:
 - visual skill bars,
 - logos,
 - heavy design elements.
+- decorative separators that interrupt reading order,
+- header/footer-only identity or contact details.
 
 Use a profile photo only in a human-facing version when needed. For ATS-first submission versions, prefer no photo.
 
 ### 7. Keep the document text-based
 
 The CV should remain selectable and searchable text.
+
+Prefer a `.docx` master version for submission when the employer accepts it. Use PDF when the employer explicitly asks for PDF or when a human-facing export is needed and the PDF is text-based.
 
 ## Bullet-writing rules
 
@@ -199,16 +216,21 @@ Useful pattern:
 ## Validation checklist before handing off
 
 - [ ] The target title or headline is aligned to the role.
+- [ ] The exact target title from the posting is used near the top when honest.
 - [ ] The summary reflects the posting clearly.
 - [ ] The strongest relevant bullets appear first.
-- [ ] Keywords appear naturally.
+- [ ] Roughly 25-35 relevant role-specific keywords appear naturally.
 - [ ] Every meaningful claim is defensible.
 - [ ] No historical title, date, scope, or ownership was distorted.
+- [ ] Contact details are in the main body, not only in a header or footer.
+- [ ] Section headings are standard and easy for ATS to classify.
+- [ ] Dates use one consistent `Month Year - Month Year` style.
 - [ ] If anything was close to an unjustifiable implication, the agent paused and asked.
 
 ## Default stance
 
 - prioritize clarity over design,
+- prioritize exact employer wording over clever synonyms when truthful,
 - prioritize exact relevance over generic breadth,
 - prioritize truthful matching over clever wording,
 - prioritize stronger positioning without crossing into fiction.
