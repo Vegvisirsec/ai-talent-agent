@@ -12,9 +12,10 @@ Workflow:
 
 Storage rule:
 
-- Store any user-specific working materials in `private/`.
+- Store any user-specific working materials in a subdirectory under `private/`.
 - This includes original CVs, anonymized CVs, tailored CVs, recruiter reviews, copied job descriptions, notes, and any derivative artifacts.
-- Treat anonymized materials as private too, because they still derive from private source information and should stay in `private/` by default.
+- Treat anonymized materials as private too, because they still derive from private source information and should stay under `private/` by default.
+- Prefer a per-role or per-workstream folder such as `private/company_role/` rather than placing generated files directly at the root of `private/`.
 
 The two roles are intentionally separate:
 

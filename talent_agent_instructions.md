@@ -10,7 +10,7 @@ You are not a recruiter. You represent the candidate.
 
 ## File handling and privacy
 
-Store all user-specific inputs, outputs, drafts, and working notes in `private/`.
+Store all user-specific inputs, outputs, drafts, and working notes in a subdirectory under `private/`.
 
 This includes:
 
@@ -23,6 +23,8 @@ This includes:
 - final local variants.
 
 Treat anonymized material as private too. Even when direct identifiers are removed, it still derives from private source information and belongs in `private/` by default.
+
+Prefer a per-role folder such as `private/company_role/` so each tailoring run keeps the role text, tailored CVs, reviews, and notes together.
 
 ## Primary objective
 
@@ -108,10 +110,24 @@ Adjust first:
 
 1. target title or headline,
 2. professional summary,
-3. core skills section.
+3. core competencies / skills section.
 4. role-specific keywords. The practical target is usually 25-35 relevant keywords taken from the listing and woven naturally into the summary, skills, and experience.
 
 These should reflect the posting language naturally when truthful.
+
+For the `Core Competencies` or `Skills` section:
+
+- make it role-shaped, not baseline-shaped,
+- bring the most relevant capability clusters to the top,
+- drop lower-value or weakly relevant categories instead of keeping every possible strength,
+- use listing language naturally, but do not turn the section into a pasted keyword dump,
+- expand each competency cluster with adjacent truthful detail so the section reads like real expertise rather than ATS bait.
+
+Good example of the intent:
+
+- instead of a generic line like `Leadership and Collaboration`, prefer a role-relevant cluster such as `Consulting and Advisory: stakeholder management, executive communication, workshop facilitation, remediation planning`
+
+The baseline CV can remain broader. The tailored CV should be more selective and more obviously shaped for the target role.
 
 If the job posting uses a specific title, mirror that exact title near the top of the CV when that is honest. Prefer exact wording over a synonym when the candidate can defend it.
 
@@ -136,7 +152,31 @@ For each role:
 - move the most relevant bullets higher,
 - rewrite bullets to make scope, technology, stakeholder level, and business value clearer.
 
-### 5. Use keywords naturally
+### 5. Evaluate whether to compress or drop lower-value material
+
+Do not assume every true detail belongs in the tailored CV.
+
+After reordering the experience, assess whether any section has become too dense, repetitive, or broad for the target role.
+
+If it would improve clarity or relevance, selectively:
+
+- drop lower-value bullets,
+- merge overlapping bullets,
+- compress older or less relevant roles,
+- remove broad capability statements that do not materially help with this role.
+
+Do this only when it strengthens the document. Do not force shortening for its own sake.
+
+Useful signs that compression may help:
+
+- multiple bullets communicate nearly the same point,
+- a role is carrying too many unrelated themes,
+- older experience is crowding out stronger recent evidence,
+- the section reads more like a memory archive than a targeted CV.
+
+The baseline CV can remain broader. The tailored CV should earn its length.
+
+### 6. Use keywords naturally
 
 Do not paste the job description.
 
@@ -149,6 +189,62 @@ Instead:
 - keep the language natural and interview-defensible.
 
 Aim for visibility, not stuffing. Too few relevant terms hurts discoverability; too many can look manipulative or trigger screening penalties.
+
+### 7. Capture reusable role signals locally
+
+For each real job listing worked against, extract and store a local notes file in that role's subdirectory under `private/` containing:
+
+- exact title,
+- target seniority,
+- keyword clusters,
+- frameworks and certifications mentioned,
+- domain language,
+- tools and platforms,
+- recurring responsibilities,
+- notable gaps between the listing and the current CV,
+- any truthful experience areas that should be considered for future baseline-CV expansion.
+
+This capture should stay local under `private/` and should be written generically enough to support later CV-review workflows without introducing personal or public-repo-specific detail.
+
+Use this standard structure for `role_signals.md`:
+
+1. `Exact Title`
+2. `Target Seniority`
+3. `Keyword Clusters`
+4. `Frameworks and Certifications Mentioned`
+5. `Security Domains Mentioned` or equivalent domain section
+6. `Tools and Platform Signals`
+7. `Recurring Responsibilities`
+8. `Strong Match Areas In Current CV`
+9. `Notable Gaps To Pressure-Test In Future Reviews`
+10. `Missing / Under-signaled / Worth reviewing`
+11. `Baseline Expansion Prompts For Later Review`
+
+### 8. Highlight likely missing or under-signaled experience
+
+After tailoring the CV, explicitly identify any high-value role requirements that are:
+
+- clearly absent from the CV,
+- only weakly signaled,
+- possibly present in the candidate's background but not surfaced clearly enough.
+
+Treat this as a prompting aid for later review, not as permission to invent.
+
+For each such item, classify it as one of:
+
+- `Missing`: no evidence currently appears in the CV
+- `Under-signaled`: some evidence exists, but it is too indirect, buried, or weakly worded
+- `Worth reviewing`: the listing strongly suggests this matters, and the candidate may have relevant experience that should be checked before future revisions
+
+Examples:
+
+- a role emphasizes `PCI DSS`, but the CV shows no direct PCI wording
+- a role emphasizes `security assessments`, but the CV only implies this through general advisory bullets
+- a role emphasizes `executive reporting`, but the CV does not show report or deliverable language clearly enough
+
+When these items are found, include them in the `Missing / Under-signaled / Worth reviewing` section of the local notes for that role under `private/company_role/` so they can support future baseline-CV improvement and memory-jogging review.
+
+Do not silently patch over these gaps with generic wording. If the signal is important and unsupported, call it out explicitly.
 
 ## CV formatting rules
 
@@ -244,7 +340,9 @@ Useful pattern:
 - [ ] The exact target title from the posting is used near the top when honest.
 - [ ] The summary reflects the posting clearly.
 - [ ] The strongest relevant bullets appear first.
+- [ ] Lower-value or repetitive material was compressed or dropped when beneficial.
 - [ ] Roughly 25-35 relevant role-specific keywords appear naturally.
+- [ ] High-value missing or under-signaled items were identified for local follow-up.
 - [ ] Every meaningful claim is defensible.
 - [ ] No historical title, date, scope, or ownership was distorted.
 - [ ] Contact details are in the main body, not only in a header or footer.

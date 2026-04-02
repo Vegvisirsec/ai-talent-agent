@@ -1,0 +1,23 @@
+{
+  "FULL_NAME": "Firstname Lastname",
+  "ADDRESS": "City, Country",
+  "PHONE": "+00 000 0000000",
+  "EMAIL": "firstname.lastname@example.com",
+  "LINKEDIN_URL": "https://linkedin.com/in/your-profile",
+  "GITHUB_URL": "https://github.com/your-profile",
+  "LOCATION_NOTE": "Based in Country and open to relocation.",
+  "LANGUAGE_1_NAME": "English",
+  "LANGUAGE_1_LEVEL": "Professional working proficiency",
+  "LANGUAGE_2_NAME": "Local language",
+  "LANGUAGE_2_LEVEL": "Native",
+  "EDUCATION_1": "Example University",
+  "EDUCATION_2": "Example Polytechnic",
+  "EMPLOYER_1": "Example Employer 1",
+  "EMPLOYER_1_DESC": "Short one-line employer context for international readers.",
+  "EMPLOYER_2": "Example Employer 2",
+  "EMPLOYER_2_DESC": "Short one-line employer context for international readers.",
+  "EMPLOYER_3": "Example Employer 3",
+  "EMPLOYER_3_DESC": "Short one-line employer context for international readers.",
+  "EMPLOYER_4": "Example Employer 4",
+  "EMPLOYER_4_DESC": "Short one-line employer context for international readers."
+}

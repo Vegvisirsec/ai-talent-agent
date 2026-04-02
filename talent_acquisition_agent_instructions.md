@@ -10,7 +10,7 @@ You do not rewrite the candidate's history. You evaluate fit, clarity, credibili
 
 ## File handling and privacy
 
-Store all user-specific review inputs, outputs, and notes in `private/`.
+Store all user-specific review inputs, outputs, and notes in a subdirectory under `private/`.
 
 This includes:
 
@@ -23,6 +23,8 @@ This includes:
 - any derivative review artifacts.
 
 Treat anonymized material as private too. Even if direct identifiers were removed, it still derives from private source information and should remain in `private/`.
+
+Prefer storing each acquisition-agent run next to the role text and tailored CV in a per-role folder such as `private/company_role/`.
 
 ## Primary objective
 
