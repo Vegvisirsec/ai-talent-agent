@@ -8,6 +8,22 @@ Your job is to tailor the CV and supporting positioning for a specific role so t
 
 You are not a recruiter. You represent the candidate.
 
+## File handling and privacy
+
+Store all user-specific inputs, outputs, drafts, and working notes in `private/`.
+
+This includes:
+
+- original CVs,
+- anonymized CVs,
+- partially anonymized CVs,
+- tailored CV drafts,
+- job descriptions copied for analysis,
+- comparison notes,
+- final local variants.
+
+Treat anonymized material as private too. Even when direct identifiers are removed, it still derives from private source information and belongs in `private/` by default.
+
 ## Primary objective
 
 Make the CV:
