@@ -1,5 +1,6 @@
 import argparse
 import re
+import tempfile
 from pathlib import Path
 
 
@@ -9,6 +10,30 @@ PLACEHOLDER_IMAGE_RE = re.compile(
     r"!\[[^\]]*Profile Photo[^\]]*\]\((photo-placeholder\.jpg|portrait\.png)\)",
     re.IGNORECASE,
 )
+DEFAULT_MAX_BYTES = 1_572_864
+IMAGE_COMPRESSION_STEPS = (
+    (1200, 82),
+    (1000, 72),
+    (900, 64),
+    (800, 56),
+    (700, 48),
+    (600, 40),
+    (500, 34),
+)
+
+
+def resolve_cli_path(value: str | None, base_dir: Path | None = None) -> Path | None:
+    if not value:
+        return None
+
+    candidate = Path(value).expanduser()
+    if candidate.is_absolute():
+        return candidate.resolve()
+
+    if base_dir is not None:
+        return (base_dir / candidate).resolve()
+
+    return candidate.resolve()
 
 
 def strip_markdown(text: str) -> str:
@@ -73,28 +98,94 @@ def parse_markdown(markdown_text: str):
     return blocks
 
 
-def prepare_markdown(markdown_text: str, base_dir: Path):
-    portrait_path = base_dir / "portrait.png"
+def prepare_markdown(markdown_text: str, base_dir: Path, portrait_path: Path | None = None):
+    portrait_path = portrait_path or (base_dir / "portrait.png")
     embedded_portrait = False
+    portrait_reference = None
+
+    if portrait_path == (base_dir / "portrait.png"):
+        portrait_reference = "portrait.png"
+    else:
+        portrait_reference = portrait_path.resolve().as_posix()
 
     if portrait_path.exists():
         if PLACEHOLDER_IMAGE_RE.search(markdown_text):
             markdown_text = PLACEHOLDER_IMAGE_RE.sub(
-                "![Profile Photo](portrait.png)", markdown_text, count=1
+                f"![Profile Photo]({portrait_reference})", markdown_text, count=1
             )
             embedded_portrait = True
         elif not IMAGE_RE.search(markdown_text):
             lines = markdown_text.splitlines()
             if lines and lines[0].startswith("# "):
                 lines.insert(1, "")
-                lines.insert(2, "![Profile Photo](portrait.png)")
+                lines.insert(2, f"![Profile Photo]({portrait_reference})")
                 lines.insert(3, "")
                 markdown_text = "\n".join(lines)
             else:
-                markdown_text = "![Profile Photo](portrait.png)\n\n" + markdown_text
+                markdown_text = f"![Profile Photo]({portrait_reference})\n\n" + markdown_text
             embedded_portrait = True
 
-    return markdown_text, portrait_path, embedded_portrait
+    return markdown_text, portrait_path, portrait_reference, embedded_portrait
+
+
+def resolve_image_path(base_dir: Path, value: str) -> Path:
+    image_path = Path(value)
+    if image_path.is_absolute():
+        return image_path
+    return (base_dir / value).resolve()
+
+
+def replace_image_blocks(blocks, replacement_path: Path):
+    updated = []
+    for kind, value in blocks:
+        if kind == "image":
+            updated.append((kind, str(replacement_path)))
+        else:
+            updated.append((kind, value))
+    return updated
+
+
+def build_compressed_image(source_path: Path, output_path: Path, max_edge: int, quality: int):
+    try:
+        from PIL import Image
+    except ImportError:
+        return False
+
+    with Image.open(source_path) as image:
+        image = image.convert("RGBA")
+        background = Image.new("RGB", image.size, "white")
+        background.paste(image, mask=image.getchannel("A"))
+        image = background
+        image.thumbnail((max_edge, max_edge))
+        image.save(output_path, format="JPEG", quality=quality, optimize=True, progressive=True)
+    return True
+
+
+def render_with_size_cap(render_fn, blocks, output_path: Path, base_dir: Path, theme: str, max_bytes: int):
+    image_blocks = [value for kind, value in blocks if kind == "image"]
+    render_fn(blocks, output_path, base_dir, theme)
+
+    if output_path.stat().st_size <= max_bytes or not image_blocks:
+        return output_path.stat().st_size, False
+
+    original_image_path = resolve_image_path(base_dir, image_blocks[0])
+    if not original_image_path.exists():
+        return output_path.stat().st_size, False
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_dir_path = Path(temp_dir)
+        compressed_any = False
+        for idx, (max_edge, quality) in enumerate(IMAGE_COMPRESSION_STEPS, start=1):
+            compressed_path = temp_dir_path / f"portrait_{idx}.jpg"
+            if not build_compressed_image(original_image_path, compressed_path, max_edge, quality):
+                break
+            compressed_any = True
+            candidate_blocks = replace_image_blocks(blocks, compressed_path)
+            render_fn(candidate_blocks, output_path, base_dir, theme)
+            if output_path.stat().st_size <= max_bytes:
+                return output_path.stat().st_size, True
+
+    return output_path.stat().st_size, compressed_any
 
 
 def render_docx(blocks, output_path: Path, base_dir: Path, theme: str):
@@ -141,7 +232,7 @@ def render_docx(blocks, output_path: Path, base_dir: Path, theme: str):
             run.font.size = Pt(11)
             run.font.color.rgb = heading_color
         elif kind == "image":
-            image_path = (base_dir / value).resolve()
+            image_path = resolve_image_path(base_dir, value)
             if image_path.exists():
                 document.add_picture(str(image_path), width=Inches(1.35))
         elif kind == "p":
@@ -253,7 +344,7 @@ def render_pdf(blocks, output_path: Path, base_dir: Path, theme: str):
         elif kind == "h3":
             story.append(Paragraph(value, h3))
         elif kind == "image":
-            image_path = (base_dir / value).resolve()
+            image_path = resolve_image_path(base_dir, value)
             if image_path.exists():
                 image = Image(str(image_path), width=34 * mm, height=42.5 * mm, kind="proportional")
                 story.append(image)
@@ -304,6 +395,16 @@ def main():
         default="light",
         help="Visual theme for rendered outputs. PDF supports both themes well; DOCX stays conservative for compatibility.",
     )
+    parser.add_argument(
+        "--max-bytes",
+        type=int,
+        default=DEFAULT_MAX_BYTES,
+        help="Best-effort maximum output size in bytes for DOCX/PDF. Defaults to 1572864 (1.5 MB).",
+    )
+    parser.add_argument(
+        "--portrait",
+        help="Optional path to a portrait image. Defaults to portrait.png next to the markdown file.",
+    )
     args = parser.parse_args()
 
     selected_input = args.input_path or args.input
@@ -314,8 +415,11 @@ def main():
         parser.error("Specify at least one output format: --docx, --pdf, or --both.")
 
     input_path = Path(selected_input)
+    portrait_path = resolve_cli_path(args.portrait)
     markdown_text = input_path.read_text(encoding="utf-8")
-    markdown_text, portrait_path, embedded_portrait = prepare_markdown(markdown_text, input_path.parent)
+    markdown_text, portrait_path, portrait_reference, embedded_portrait = prepare_markdown(
+        markdown_text, input_path.parent, portrait_path
+    )
     blocks = parse_markdown(markdown_text)
 
     generate_docx = args.docx or args.both
@@ -323,13 +427,29 @@ def main():
 
     if generate_docx:
         docx_path = input_path.with_suffix(".docx")
-        render_docx(blocks, docx_path, input_path.parent, args.theme)
+        docx_size, docx_compressed = render_with_size_cap(
+            render_docx, blocks, docx_path, input_path.parent, args.theme, args.max_bytes
+        )
         print(f"Rendered {input_path} -> {docx_path}")
+        if docx_compressed:
+            print("Applied portrait compression to reduce DOCX size.")
+        if docx_size > args.max_bytes:
+            print(
+                f"Warning: {docx_path.name} is {docx_size} bytes, which exceeds the target of {args.max_bytes} bytes."
+            )
 
     if generate_pdf:
         pdf_path = input_path.with_suffix(".pdf")
-        render_pdf(blocks, pdf_path, input_path.parent, args.theme)
+        pdf_size, pdf_compressed = render_with_size_cap(
+            render_pdf, blocks, pdf_path, input_path.parent, args.theme, args.max_bytes
+        )
         print(f"Rendered {input_path} -> {pdf_path}")
+        if pdf_compressed:
+            print("Applied portrait compression to reduce PDF size.")
+        if pdf_size > args.max_bytes:
+            print(
+                f"Warning: {pdf_path.name} is {pdf_size} bytes, which exceeds the target of {args.max_bytes} bytes."
+            )
 
     if embedded_portrait:
         print(f"Embedded portrait from {portrait_path}")

@@ -2,6 +2,7 @@ import argparse
 import base64
 import html
 import re
+import tempfile
 from pathlib import Path
 
 
@@ -13,13 +14,60 @@ PLACEHOLDER_IMAGE_RE = re.compile(
     r"!\[[^\]]*Profile Photo[^\]]*\]\((photo-placeholder\.jpg|portrait\.png)\)",
     re.IGNORECASE,
 )
+DEFAULT_MAX_BYTES = 1_572_864
+IMAGE_COMPRESSION_STEPS = (
+    (1200, 82),
+    (1000, 72),
+    (900, 64),
+    (800, 56),
+    (700, 48),
+    (600, 40),
+    (500, 34),
+)
+
+
+def resolve_cli_path(value: str | None, base_dir: Path | None = None) -> Path | None:
+    if not value:
+        return None
+
+    candidate = Path(value).expanduser()
+    if candidate.is_absolute():
+        return candidate.resolve()
+
+    if base_dir is not None:
+        return (base_dir / candidate).resolve()
+
+    return candidate.resolve()
+
+
+def resolve_image_path(src: str, base_dir: Path) -> Path:
+    image_path = Path(src)
+    if image_path.is_absolute():
+        return image_path
+    return (base_dir / src).resolve()
+
+
+def build_compressed_image(source_path: Path, output_path: Path, max_edge: int, quality: int) -> bool:
+    try:
+        from PIL import Image
+    except ImportError:
+        return False
+
+    with Image.open(source_path) as image:
+        image = image.convert("RGBA")
+        background = Image.new("RGB", image.size, "white")
+        background.paste(image, mask=image.getchannel("A"))
+        image = background
+        image.thumbnail((max_edge, max_edge))
+        image.save(output_path, format="JPEG", quality=quality, optimize=True, progressive=True)
+    return True
 
 
 def embed_image_src(src: str, base_dir: Path) -> str:
     if src.startswith(("http://", "https://", "data:")):
         return src
 
-    image_path = (base_dir / src).resolve()
+    image_path = resolve_image_path(src, base_dir)
     if not image_path.exists():
         return src
 
@@ -272,6 +320,36 @@ img.profile-photo[src="photo-placeholder.jpg"] {
 """
 
 
+def prepare_markdown(markdown_text: str, base_dir: Path, portrait_path: Path | None = None):
+    portrait_path = portrait_path or (base_dir / "portrait.png")
+    embedded_portrait = False
+    portrait_reference = None
+
+    if portrait_path == (base_dir / "portrait.png"):
+        portrait_reference = "portrait.png"
+    else:
+        portrait_reference = portrait_path.resolve().as_posix()
+
+    if portrait_path.exists():
+        if PLACEHOLDER_IMAGE_RE.search(markdown_text):
+            markdown_text = PLACEHOLDER_IMAGE_RE.sub(
+                f"![Profile Photo]({portrait_reference})", markdown_text, count=1
+            )
+            embedded_portrait = True
+        elif not IMAGE_RE.search(markdown_text):
+            lines = markdown_text.splitlines()
+            if lines and lines[0].startswith("# "):
+                lines.insert(1, "")
+                lines.insert(2, f"![Profile Photo]({portrait_reference})")
+                lines.insert(3, "")
+                markdown_text = "\n".join(lines)
+            else:
+                markdown_text = f"![Profile Photo]({portrait_reference})\n\n" + markdown_text
+            embedded_portrait = True
+
+    return markdown_text, portrait_path, portrait_reference, embedded_portrait
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Render a CV markdown file to clean HTML.")
     parser.add_argument("input", nargs="?", help="Path to the markdown CV file")
@@ -281,6 +359,16 @@ def main() -> None:
         "--output",
         help="Path to the output HTML file. Defaults to the input filename with .html extension.",
     )
+    parser.add_argument(
+        "--max-bytes",
+        type=int,
+        default=DEFAULT_MAX_BYTES,
+        help="Best-effort maximum output size in bytes. Defaults to 1572864 (1.5 MB).",
+    )
+    parser.add_argument(
+        "--portrait",
+        help="Optional path to a portrait image. Defaults to portrait.png next to the markdown file.",
+    )
     args = parser.parse_args()
 
     selected_input = args.input_path or args.input
@@ -289,33 +377,47 @@ def main() -> None:
 
     input_path = Path(selected_input)
     output_path = Path(args.output) if args.output else input_path.with_suffix(".html")
+    portrait_path = resolve_cli_path(args.portrait)
 
     markdown_text = input_path.read_text(encoding="utf-8")
-    portrait_path = input_path.parent / "portrait.png"
-    embedded_portrait = False
-    if portrait_path.exists():
-        if PLACEHOLDER_IMAGE_RE.search(markdown_text):
-            markdown_text = PLACEHOLDER_IMAGE_RE.sub("![Profile Photo](portrait.png)", markdown_text, count=1)
-            embedded_portrait = True
-        elif not IMAGE_RE.search(markdown_text):
-            lines = markdown_text.splitlines()
-            if lines and lines[0].startswith("# "):
-                lines.insert(1, "")
-                lines.insert(2, "![Profile Photo](portrait.png)")
-                lines.insert(3, "")
-                markdown_text = "\n".join(lines)
-            else:
-                markdown_text = "![Profile Photo](portrait.png)\n\n" + markdown_text
-            embedded_portrait = True
+    markdown_text, portrait_path, portrait_reference, embedded_portrait = prepare_markdown(
+        markdown_text, input_path.parent, portrait_path
+    )
     title = input_path.stem.replace("_", " ").title()
     html_text = markdown_to_html(markdown_text, title, input_path.parent)
+
+    compressed_any = False
+    if len(html_text.encode("utf-8")) > args.max_bytes and embedded_portrait and portrait_path.exists():
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_dir_path = Path(temp_dir)
+            for idx, (max_edge, quality) in enumerate(IMAGE_COMPRESSION_STEPS, start=1):
+                compressed_path = temp_dir_path / f"portrait_{idx}.jpg"
+                if not build_compressed_image(portrait_path, compressed_path, max_edge, quality):
+                    break
+                compressed_any = True
+                candidate_markdown = markdown_text.replace(
+                    f"![Profile Photo]({portrait_reference})",
+                    f"![Profile Photo]({compressed_path.as_posix()})",
+                )
+                candidate_html = markdown_to_html(candidate_markdown, title, input_path.parent)
+                html_text = candidate_html
+                if len(html_text.encode("utf-8")) <= args.max_bytes:
+                    break
+
     output_path.write_text(html_text, encoding="utf-8")
 
     print(f"Rendered {input_path} -> {output_path}")
     if embedded_portrait:
         print(f"Embedded portrait from {portrait_path}")
+        if compressed_any:
+            print("Applied portrait compression to reduce HTML size.")
     elif PLACEHOLDER_IMAGE_RE.search(markdown_text):
         print(f"No portrait embedded. Expected file at {portrait_path}")
+    html_size = output_path.stat().st_size
+    if html_size > args.max_bytes:
+        print(
+            f"Warning: {output_path.name} is {html_size} bytes, which exceeds the target of {args.max_bytes} bytes."
+        )
 
 
 if __name__ == "__main__":
